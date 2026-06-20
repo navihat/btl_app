@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true,
+    "target": "ESNext",
+    "paths": {
+      "@domain/*": ["./src/domain/*"],
+      "@infrastructure/*": ["./src/infrastructure/*"],
+      "@patterns/*": ["./src/patterns/*"]
+    }
+  },
+  "include": ["src/renderer/**/*", "src/domain/**/*", "src/patterns/**/*"]
+}

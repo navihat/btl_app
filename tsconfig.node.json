@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "target": "ESNext",
+    "outDir": ".tsbuild/node",
+    "paths": {
+      "@domain/*": ["./src/domain/*"],
+      "@infrastructure/*": ["./src/infrastructure/*"],
+      "@patterns/*": ["./src/patterns/*"]
+    }
+  },
+  "include": ["src/main/**/*", "src/domain/**/*", "src/infrastructure/**/*", "src/patterns/**/*"]
+}

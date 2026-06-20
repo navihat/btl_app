@@ -1,0 +1,517 @@
+==============================================================
+  NGƯỜI 4 – OBSERVER + UNIT TESTS + SOLID REVIEW
+  Ứng dụng Tạo Đề Trắc Nghiệm
+==============================================================
+
+--------------------------------------------------------------
+1. Ý TƯỞNG VÀ LÝ DO LỰA CHỌN
+--------------------------------------------------------------
+
+Người 4 chịu 3 nhiệm vụ chính:
+  (A) Observer Pattern: lắng nghe sự kiện tạo/xóa đề thi
+  (B) Toàn bộ 32 unit tests với mock repositories
+  (C) Rà soát SOLID, ghi chú vị trí áp dụng cho báo cáo
+
+Tại sao chọn Observer cho quản lý đề thi?
+  Khi ExamService tạo hoặc xóa đề thi, có thể có nhiều
+  "bên quan tâm" cần được thông báo:
+    - UI component muốn cập nhật số lượng hiển thị
+    - Logger muốn ghi lại lịch sử thay đổi
+    - Cache muốn invalidate
+
+  Nếu hard-code vào ExamService:
+    async createExam(dto) {
+      ...
+      await logger.log(exam)         ← ExamService biết về Logger?
+      await cache.invalidate()       ← vi phạm SRP, OCP
+      ui.refresh()
+    }
+  → ExamService phải import và biết về mọi "bên quan tâm".
+  → Thêm một subscriber mới phải sửa ExamService.
+
+  Observer Pattern giải quyết:
+    ExamService chỉ gọi examSubject.notify('created', exam)
+    → ExamSubject tự phân phối đến tất cả subscriber đã đăng ký
+    → Thêm subscriber mới: subject.subscribe(new MyObserver())
+    → Không sửa ExamService
+
+Tại sao viết unit test với mock repository?
+  - Unit test phải nhanh và cô lập: không đọc/ghi file thật.
+  - InMemoryRepository lưu data trong mảng RAM → tốc độ nanosecond.
+  - Có thể kiểm tra nội bộ (repo.getAll()) mà JsonRepository
+    không cần cung cấp method đó.
+  - Khi test thất bại, chắc chắn là do logic sai, không phải
+    do file I/O hay path sai.
+
+Chiến lược kiểm tra:
+  - Test happy path: kết quả đúng khi input hợp lệ
+  - Test error path: throw đúng message khi input sai
+  - Test side effect: repo thực sự được gọi với đúng data
+  - Test observer: spy function được gọi đúng số lần
+
+
+--------------------------------------------------------------
+2. CẤU TRÚC FILE NGƯỜI 4 PHỤ TRÁCH
+--------------------------------------------------------------
+
+src/patterns/observer/
+  IExamObserver.ts        ← Interface Observer
+  ExamSubject.ts          ← Subject / Publisher
+  ExamListObserver.ts     ← Concrete Observer
+
+src/tests/
+  mocks/
+    InMemoryQuestionRepository.ts  ← Fake repo cho test
+    InMemoryExamRepository.ts      ← Fake repo cho test
+    fixtures.ts                    ← Hàm tạo test data
+  QuestionFactory.test.ts          ← 5 test cases
+  ExamBuilder.test.ts              ← 4 test cases
+  ManualSelectionStrategy.test.ts  ← 3 test cases
+  ExamSubject.test.ts              ← 5 test cases
+  QuestionService.test.ts          ← 7 test cases
+  ExamService.test.ts              ← 8 test cases
+
+
+--------------------------------------------------------------
+3. SETUP VÀ CHẠY TEST
+--------------------------------------------------------------
+
+Chạy tất cả tests:
+  npm test
+
+Chạy từng file:
+  npx vitest run src/tests/ExamSubject.test.ts
+  npx vitest run src/tests/QuestionService.test.ts
+  npx vitest run src/tests/ExamService.test.ts
+
+Chạy ở chế độ watch (tự chạy lại khi sửa code):
+  npm run test:watch
+
+Xem coverage:
+  npm run test:coverage
+  → In bảng text trực tiếp terminal
+  → Tạo file HTML chi tiết tại coverage/lcov-report/index.html
+
+Kết quả hiện tại:
+  32 tests | 6 test files | 100% pass
+  Coverage: 90.75% statements (target: ≥ 80%)
+
+
+--------------------------------------------------------------
+4. CHI TIẾT OBSERVER PATTERN
+--------------------------------------------------------------
+
+---- src/patterns/observer/IExamObserver.ts ----
+
+  interface IExamObserver {
+    update(event: 'created' | 'deleted', exam: Exam): void
+  }
+
+Bất kỳ class nào muốn "nghe" sự kiện đề thi đều phải
+implements interface này. Đây là contract duy nhất giữa
+Subject và Observer.
+
+
+---- src/patterns/observer/ExamSubject.ts ----
+
+Subject (Publisher) quản lý danh sách observer.
+
+  private observers: IExamObserver[] = []
+
+  subscribe(observer):
+    Kiểm tra !includes trước khi push → tránh đăng ký trùng
+
+  unsubscribe(observer):
+    filter() loại bỏ observer khỏi mảng
+
+  notify(event, exam):
+    Duyệt tất cả observers, gọi observer.update(event, exam)
+    → Theo thứ tự đăng ký
+
+  getObserverCount():
+    Trả về số lượng observer đang đăng ký (dùng trong test)
+
+ExamService giữ một instance của ExamSubject:
+  Sau createExam(): examSubject.notify('created', exam)
+  Sau deleteExam(): examSubject.notify('deleted', exam)
+
+
+---- src/patterns/observer/ExamListObserver.ts ----
+
+Concrete Observer lưu snapshot danh sách đề thi.
+
+  private exams: Exam[] = []
+  private lastEvent: {type, exam} | null = null
+
+  update(event, exam):
+    Lưu lastEvent (để debug / test)
+    if 'created': push exam vào exams
+    if 'deleted': filter() loại bỏ exam khỏi exams
+
+  getExams(): Exam[]
+    Trả về copy của danh sách (spread để tránh mutation ngoài)
+
+  getLastEvent()
+    Trả về event cuối cùng nhận được
+
+Ứng dụng thực tế:
+  → Có thể dùng để sync UI mà không cần gọi lại IPC
+  → Có thể làm ActivityLogger ghi lịch sử thao tác
+  → Mở rộng: EmailNotificationObserver gửi mail khi tạo đề
+
+
+--------------------------------------------------------------
+5. CHI TIẾT MOCK REPOSITORIES
+--------------------------------------------------------------
+
+---- src/tests/mocks/InMemoryQuestionRepository.ts ----
+
+Implements IQuestionRepository với mảng RAM.
+
+  private store: Question[] = []
+
+  constructor(initial: Question[] = [])
+    → Khởi tạo với dữ liệu mẫu cho test
+
+  findAll(filter?): async
+    Lọc giống JsonQuestionRepository nhưng không đọc file
+
+  findById(id): async
+    Array.find() → null nếu không có
+
+  save(question): async
+    store.push(question)
+
+  update(question): async
+    findIndex → store[idx] = question
+
+  delete(id): async
+    store = store.filter(q => q.id !== id)
+
+  getAll(): Question[]   ← THÊM method này để test kiểm tra state
+    return [...store]
+
+
+---- src/tests/mocks/InMemoryExamRepository.ts ----
+
+Tương tự cho Exam.
+
+  getAll(): Exam[]   ← dùng để assert số lượng sau create/delete
+
+
+---- src/tests/mocks/fixtures.ts ----
+
+Hàm tạo test data để tái sử dụng.
+
+  makeQuestion(overrides?):
+    Trả về Question hợp lệ với giá trị mặc định.
+    overrides: ghi đè bất kỳ field nào.
+
+    Ví dụ:
+      makeQuestion()
+      → { id: 'q-1', content: 'Câu hỏi mẫu?', ... }
+
+      makeQuestion({ id: 'q-custom', difficulty: Difficulty.Hard })
+      → { id: 'q-custom', difficulty: 'hard', ... }
+
+  makeExam(overrides?):
+    Tương tự cho Exam.
+    questionIds: []  ← mặc định rỗng
+
+
+--------------------------------------------------------------
+6. CHI TIẾT 32 TEST CASES
+--------------------------------------------------------------
+
+===== QuestionFactory.test.ts (5 tests) =====
+
+TC01 – create() trả về Question với đầy đủ fields
+  Arrange: DTO hợp lệ đủ 4 options, correctOptionIndex: 0
+  Act:     factory.create(validDTO)
+  Assert:
+    q.id có giá trị (truthy)
+    q.content === 'Thủ đô của Việt Nam là?'
+    q.options.length === 4
+    q.correctOptionId === q.options[0].id
+    q.difficulty === Difficulty.Easy
+    q.topic === 'Địa lý'
+    q.createdAt có giá trị
+
+TC02 – create() sinh uuid duy nhất mỗi lần gọi
+  Arrange: cùng DTO
+  Act:     gọi factory.create() 2 lần
+  Assert:  q1.id !== q2.id
+
+TC03 – create() throw khi options không đủ 4
+  Arrange: DTO với options chỉ 2 phần tử
+  Act/Assert: expect(() => factory.create(...)).toThrow('4 đáp án')
+
+TC04 – create() throw khi content rỗng
+  Arrange: DTO với content = '  ' (toàn khoảng trắng)
+  Assert:  toThrow('không được để trống')
+
+TC05 – create() throw khi correctOptionIndex ngoài phạm vi
+  Arrange: DTO với correctOptionIndex = 5 (khi chỉ có 4 options)
+  Assert:  toThrow('không hợp lệ')
+
+
+===== ExamBuilder.test.ts (4 tests) =====
+
+TC06 – build() trả về Exam hợp lệ khi đủ fields
+  Arrange: builder mới
+  Act:     .setTitle('Đề giữa kỳ').setDescription('...')
+           .setDuration(60).setDifficulty(Medium).build()
+  Assert:
+    exam.id truthy, title === 'Đề giữa kỳ', duration === 60
+    exam.questionIds === [], exam.createdAt truthy
+
+TC07 – build() throw khi chưa set title
+  Act/Assert: builder.setDuration(45).build() → toThrow('Tên đề thi')
+
+TC08 – build() throw khi duration <= 0
+  Act/Assert: builder.setTitle('Đề').setDuration(0).build()
+              → toThrow('Thời gian')
+
+TC09 – reset() tự động sau build()
+  Arrange: build() một lần thành công
+  Act:     gọi build() lần 2 chỉ với setDuration()
+  Assert:  toThrow('Tên đề thi')  ← state đã được reset
+
+
+===== ManualSelectionStrategy.test.ts (3 tests) =====
+
+TC10 – select() trả đúng câu theo selectedIds
+  Arrange: bank = [q1, q2, q3]
+  Act:     strategy.select(bank, { selectedIds: ['q-1', 'q-3'] })
+  Assert:  result.length === 2, result[0].id === 'q-1',
+           result[1].id === 'q-3'
+
+TC11 – select() throw khi id không trong bank
+  Arrange: bank = [q1, q2, q3], request 'q-999'
+  Assert:  toThrow('q-999')  ← message chứa id không tìm thấy
+
+TC12 – select() trả mảng rỗng khi selectedIds rỗng
+  Assert:  result.length === 0
+
+
+===== ExamSubject.test.ts (5 tests) =====
+
+TC13 – notify('created') gọi update() trên tất cả subscriber
+  Arrange: obs = { update: vi.fn() }; subject.subscribe(obs)
+  Act:     subject.notify('created', makeExam())
+  Assert:  obs.update được gọi với ('created', exam), 1 lần
+
+TC14 – notify('deleted') gọi update() trên nhiều subscriber
+  Arrange: obs1 và obs2 đều subscribe
+  Act:     subject.notify('deleted', makeExam())
+  Assert:  obs1.update và obs2.update đều được gọi
+
+TC15 – unsubscribe() ngăn nhận event
+  Arrange: subscribe → unsubscribe
+  Act:     subject.notify('created', ...)
+  Assert:  obs.update KHÔNG được gọi
+
+TC16 – ExamListObserver cập nhật list khi nhận 'created'
+  Arrange: subject.subscribe(new ExamListObserver())
+  Act:     notify('created', exam { id: 'e-10' })
+  Assert:  listObs.getExams().length === 1
+           listObs.getExams()[0].id === 'e-10'
+           listObs.getLastEvent().type === 'created'
+
+TC17 – ExamListObserver xóa exam khỏi list khi nhận 'deleted'
+  Arrange: notify('created') → notify('deleted') cùng exam
+  Assert:  listObs.getExams().length === 0
+
+
+===== QuestionService.test.ts (7 tests) =====
+
+Setup dùng hàm helper:
+  function makeService(initial = [makeQuestion()]) {
+    const repo = new InMemoryQuestionRepository(initial)
+    const factory = new QuestionFactory()
+    return { service: new QuestionService(repo, factory), repo }
+  }
+
+TC18 – createQuestion() trả về question với đủ fields
+  Assert: q.id truthy, q.content đúng, q.options.length === 4
+
+TC19 – createQuestion() throw khi content rỗng
+  Assert: rejects.toThrow('không được để trống')
+
+TC20 – updateQuestion() cập nhật đúng field
+  Arrange: question với topic 'Toán'
+  Act:     updateQuestion(id, { topic: 'Lịch sử' })
+  Assert:  updated.topic === 'Lịch sử'
+           updated.content vẫn là giá trị cũ (partial update)
+
+TC21 – updateQuestion() throw khi id không tồn tại
+  Assert: rejects.toThrow('không tồn tại')
+
+TC22 – deleteQuestion() xóa câu hỏi khỏi repo
+  Arrange: repo có 1 câu hỏi
+  Act:     deleteQuestion(id)
+  Assert:  repo.getAll().length === 0
+
+TC23 – listQuestions() filter theo difficulty
+  Arrange: 3 câu: [Easy, Hard, Easy]
+  Act:     listQuestions({ difficulty: Difficulty.Easy })
+  Assert:  result.length === 2, tất cả có difficulty === Easy
+
+TC24 – listQuestions() filter theo topic
+  Arrange: 3 câu: ['Toán học', 'Vật lý', 'Toán đại cương']
+  Act:     listQuestions({ topic: 'Toán' })
+  Assert:  result.length === 2  ← includes match, case-insensitive
+
+
+===== ExamService.test.ts (8 tests) =====
+
+Setup:
+  function makeService(questions, exams) {
+    examRepo = InMemoryExamRepository(exams)
+    questionRepo = InMemoryQuestionRepository(questions)
+    builder = new ExamBuilder()
+    strategy = new ManualSelectionStrategy()
+    subject = new ExamSubject()
+    service = new ExamService(examRepo, questionRepo,
+                              builder, strategy, subject)
+    return { service, examRepo, questionRepo, subject }
+  }
+
+TC25 – createExam() tạo đề, lưu vào repo
+  Assert: exam.id truthy, exam.title đúng, exam.questionIds rỗng
+          examRepo.getAll().length === 1
+
+TC26 – createExam() throw khi title rỗng
+  Assert: rejects.toThrow('Tên đề thi')
+
+TC27 – addQuestions() thêm đúng số câu
+  Arrange: bank [q1, q2], exam rỗng
+  Act:     addQuestions(examId, ['q-1', 'q-2'])
+  Assert:  updated.questionIds chứa 'q-1' và 'q-2', length === 2
+
+TC28 – addQuestions() throw khi questionId không có trong bank
+  Arrange: bank rỗng, exam tồn tại
+  Assert:  rejects.toThrow('q-nonexistent')
+
+TC29 – addQuestions() throw khi câu đã có trong đề
+  Arrange: exam đã có questionIds: ['q-1']
+  Act:     addQuestions(examId, ['q-1'])  ← cố thêm lại
+  Assert:  rejects.toThrow('đã tồn tại')
+
+TC30 – deleteExam() xóa khỏi repo
+  Arrange: repo có 1 đề
+  Act:     deleteExam(id)
+  Assert:  examRepo.getAll().length === 0
+
+TC31 – deleteExam() throw khi id không tồn tại
+  Assert:  rejects.toThrow('không tồn tại')
+
+TC32 – createExam() phát event 'created' qua Observer
+  Arrange: let received = null
+           subject.subscribe({ update: (event) => received = event })
+  Act:     await service.createExam(validDTO)
+  Assert:  received === 'created'
+  → Test này xác nhận Observer được tích hợp đúng vào ExamService
+
+
+--------------------------------------------------------------
+7. SOLID REVIEW – VỊ TRÍ ÁP DỤNG CHO BÁO CÁO
+--------------------------------------------------------------
+
+S – Single Responsibility Principle (SRP)
+  ─────────────────────────────────────────
+  File: QuestionService.ts
+  Lý do: Chỉ điều phối nghiệp vụ câu hỏi (create, update, delete,
+  list). Không xử lý file I/O, không tạo UUID, không validate
+  format. Khi quy tắc nghiệp vụ thay đổi → sửa file này.
+
+  File: JsonQuestionRepository.ts
+  Lý do: Chỉ đọc/ghi questions.json. Không có logic nghiệp vụ,
+  không biết validation, không biết UUID. Khi cách lưu trữ thay
+  đổi (sang SQLite) → tạo class mới, không sửa service.
+
+  File: QuestionFactory.ts
+  Lý do: Chỉ tạo object Question hợp lệ. Không lưu trữ, không
+  điều phối workflow.
+
+  File: ExamBuilder.ts
+  Lý do: Chỉ xây dựng và validate cấu trúc Exam. Không lưu trữ.
+
+O – Open/Closed Principle (OCP)
+  ─────────────────────────────────────────
+  File: IQuestionSelectionStrategy.ts
+  Lý do: ExamService.addQuestions() gọi strategy.select() mà
+  không biết implementation cụ thể. Thêm cách chọn câu mới:
+    - ManualSelectionStrategy ✓ (hiện tại)
+    - RandomSelectionStrategy (tương lai)
+    - ByTopicSelectionStrategy (tương lai)
+  → Chỉ tạo class mới, ExamService.ts KHÔNG thay đổi dòng nào.
+
+  File: IQuestionFactory.ts
+  Lý do: Có thể tạo MultipleChoiceQuestionFactory,
+  TrueFalseQuestionFactory mà không sửa QuestionService.
+
+D – Dependency Inversion Principle (DIP)
+  ─────────────────────────────────────────
+  File: QuestionService.ts
+  Lý do: Constructor nhận IQuestionRepository (không phải
+  JsonQuestionRepository) và IQuestionFactory (không phải
+  QuestionFactory). High-level module (service) phụ thuộc vào
+  abstraction, không phụ thuộc vào detail (JSON file).
+
+  File: ExamService.ts
+  Lý do: Nhận IExamRepository, IQuestionRepository, IExamBuilder,
+  IQuestionSelectionStrategy — toàn bộ là interface.
+  → Khi test: inject InMemory* (nhanh)
+  → Khi chạy thật: inject Json* (có file)
+  → ExamService không cần thay đổi gì.
+
+  Minh họa DIP bằng code:
+    // HIGH-LEVEL (service) phụ thuộc abstraction
+    class QuestionService {
+      constructor(
+        private repo: IQuestionRepository,   ← abstraction
+        private factory: IQuestionFactory     ← abstraction
+      ) {}
+    }
+
+    // LOW-LEVEL (detail) implements abstraction
+    class JsonQuestionRepository implements IQuestionRepository { ... }
+    class InMemoryQuestionRepository implements IQuestionRepository { ... }
+
+    // WIRING (serviceFactory) kết nối high với low
+    new QuestionService(
+      new JsonQuestionRepository(...),  ← detail
+      new QuestionFactory()             ← detail
+    )
+
+
+--------------------------------------------------------------
+8. CÁC LỖI THƯỜNG GẶP KHI VIẾT TEST
+--------------------------------------------------------------
+
+Lỗi 1: Quên await trong test async
+  SAI:  const q = service.createQuestion(dto)  ← Promise, không phải Question
+  ĐÚNG: const q = await service.createQuestion(dto)
+
+Lỗi 2: Dùng expect(fn).toThrow() cho async function
+  SAI:  expect(service.createQuestion({...})).toThrow(...)
+  ĐÚNG: await expect(service.createQuestion({...})).rejects.toThrow(...)
+
+Lỗi 3: Không reset state giữa các test
+  ĐÚNG: Dùng beforeEach để tạo repository mới mỗi test:
+    let service: QuestionService
+    beforeEach(() => {
+      service = makeService([])
+    })
+  Hoặc dùng function makeService() trong từng it() block.
+
+Lỗi 4: vi.fn() không reset giữa test
+  ĐÚNG: Khai báo mock mới trong mỗi test, hoặc vi.clearAllMocks()
+    trong beforeEach.
+
+Lỗi 5: toThrow() match partial string
+  expect(...).toThrow('q-999')
+  → Vitest kiểm tra message.includes('q-999')
+  → Không cần match toàn bộ message.
+==============================================================
