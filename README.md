@@ -15,14 +15,15 @@
 
 ## Công Nghệ Sử Dụng
 
-| Công nghệ | Mục đích |
-| --- | --- |
-| Electron | Xây dựng ứng dụng desktop |
-| React | Xây dựng giao diện người dùng |
-| TypeScript | Kiểm tra kiểu tĩnh và giảm lỗi runtime |
-| Vite / electron-vite | Build và chạy môi trường phát triển |
-| Vitest | Unit test |
-| UUID | Sinh mã định danh cho câu hỏi, đáp án và đề thi |
+| Công nghệ               | Mục đích                                        |
+| ----------------------- | ----------------------------------------------- |
+| Electron                | Xây dựng ứng dụng desktop                       |
+| React                   | Xây dựng giao diện người dùng                   |
+| TypeScript              | Kiểm tra kiểu tĩnh và giảm lỗi runtime          |
+| Vite / electron-vite    | Build và chạy môi trường phát triển             |
+| Vitest                  | Unit test                                       |
+| SQLite (better-sqlite3) | Cơ sở dữ liệu nhúng cục bộ                      |
+| UUID                    | Sinh mã định danh cho câu hỏi, đáp án và đề thi |
 
 ## Kiến Trúc
 
@@ -111,11 +112,11 @@ File:
 
 ```ts
 builder
-  .setTitle('Đề giữa kỳ')
-  .setDescription('Đề thi chính thức')
+  .setTitle("Đề giữa kỳ")
+  .setDescription("Đề thi chính thức")
   .setDuration(60)
-  .setDifficulty('mixed')
-  .build()
+  .setDifficulty("mixed")
+  .build();
 ```
 
 Builder validate title và duration trước khi tạo đề thi, sau đó reset state để tránh rò rỉ dữ liệu giữa các lần build.
@@ -145,11 +146,6 @@ File:
 btl_app/
 ├── data/
 │   └── database.db
-├── docs/
-│   ├── nguoi1-ui-renderer.txt
-│   ├── nguoi2-domain-factory-strategy.txt
-│   ├── nguoi3-database-builder-config.txt
-│   └── nguoi4-observer-tests-solid.txt
 ├── src/
 │   ├── domain/
 │   │   ├── entities/
@@ -196,10 +192,16 @@ Chạy ứng dụng ở chế độ development:
 npm run dev
 ```
 
-Build bản production:
+Build bản production (biên dịch code):
 
 ```bash
 npm run build
+```
+
+Đóng gói ứng dụng (Tạo bộ cài đặt/executable):
+
+```bash
+npm run dist
 ```
 
 Kiểm tra TypeScript:
@@ -283,11 +285,11 @@ Dữ liệu được lưu trong cơ sở dữ liệu SQLite nhúng. Khi chạy d
 
 ## Phân Công Công Việc
 
-| Thành viên | Phạm vi |
-| --- | --- |
-| Người 1 | UI / Renderer / Preload |
-| Người 2 | Domain, Factory Method, Strategy |
-| Người 3 | Database, Builder, Electron main, config |
-| Người 4 | Observer, unit tests, SOLID review |
+| Thành viên | Phạm vi                                  |
+| ---------- | ---------------------------------------- |
+| Người 1    | UI / Renderer / Preload                  |
+| Người 2    | Domain, Factory Method, Strategy         |
+| Người 3    | Database, Builder, Electron main, config |
+| Người 4    | Observer, unit tests, SOLID review       |
 
-Chi tiết giải thích từng phần nằm trong thư mục `docs/`.
+Chi tiết thuyết minh thiết kế và các sơ đồ được ghi trong báo cáo [Report_NhomAC30_QuizExamGenerator.md](file:///c:/Users/Hunt/Documents/js/Cu%E1%BB%91i%20k%C3%AC/btl_app/Report_NhomAC30_QuizExamGenerator.md).
