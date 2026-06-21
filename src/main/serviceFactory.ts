@@ -13,7 +13,7 @@ import { ExamService } from '../domain/services/ExamService'
 
 function getDataPath(): string {
   if (app.isPackaged) {
-    return join(dirname(app.getPath('exe')), 'data')
+    return join(app.getPath('userData'), 'data')
   }
   return join(process.cwd(), 'data')
 }
