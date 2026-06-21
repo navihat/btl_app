@@ -294,11 +294,15 @@ Dữ liệu được lưu trong cơ sở dữ liệu SQLite nhúng. Khi chạy d
 
 ## Phân Công Công Việc
 
-| Thành viên | Phạm vi                                  |
-| ---------- | ---------------------------------------- |
-| Người 1    | UI / Renderer / Preload                  |
-| Người 2    | Domain, Factory Method, Strategy         |
-| Người 3    | Database, Builder, Electron main, config |
-| Người 4    | Observer, unit tests, SOLID review       |
+**Nhóm:** 6
+**Học kỳ:** 2025.2
+**Ngày nộp:** 23/06/2026
 
-Chi tiết thuyết minh thiết kế và các sơ đồ được ghi trong báo cáo [Report_NhomAC30_QuizExamGenerator.md](file:///c:/Users/Hunt/Documents/js/Cu%E1%BB%91i%20k%C3%AC/btl_app/Report_NhomAC30_QuizExamGenerator.md).
+| STT | Họ và tên | MSSV | Vai trò chính | Module phụ trách | Unit test phụ trách |
+|---|---|---|---|---|---|
+| 1 | Lê Thanh Thảo | 20231631 | UI / Renderer + Strategy Pattern | React Pages, Components, Electron Preload, ManualSelectionStrategy | TC11–TC15 (Strategy) |
+| 2 | Nguyễn Văn Mạnh | 20231609 | Domain / Factory Method Pattern | Question/Exam entities, QuestionFactory, IQuestionFactory | TC01–TC05 (Factory) |
+| 3 | Trương Văn Thái | 20231627 | Infrastructure / Builder Pattern + Config | JsonRepository, ExamBuilder, IExamBuilder, Electron Main, IPC | TC06–TC10 (Builder) |
+| 4 | Tống Nhật Huy | 20231595 | Observer Pattern + Service layer + SOLID | ExamSubject, ExamListObserver, ExamService, QuestionService, serviceFactory | TC16–TC25 (Observer + Service) |
+
+Chi tiết thuyết minh thiết kế và các sơ đồ được ghi trong báo cáo `Report_Nhom6_QuizExamGenerator.md`.
