@@ -1,5 +1,20 @@
-import { app, BrowserWindow, shell, ipcMain } from 'electron'
+import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron'
 import { join } from 'path'
+import * as fs from 'fs'
+
+process.on('uncaughtException', (error) => {
+  const logPath = join(app.getPath('userData'), 'crash.log')
+  fs.writeFileSync(logPath, `Crash: ${error.stack}\n`, { flag: 'a' })
+  dialog.showErrorBox('App Crash', error.stack || error.message || String(error))
+  app.quit()
+})
+
+process.on('unhandledRejection', (reason) => {
+  const logPath = join(app.getPath('userData'), 'crash.log')
+  fs.writeFileSync(logPath, `Promise Rejection: ${String(reason)}\n`, { flag: 'a' })
+  dialog.showErrorBox('Unhandled Promise Rejection', String(reason))
+  app.quit()
+})
 import { registerQuestionHandlers } from './ipc/questionHandlers'
 import { registerExamHandlers } from './ipc/examHandlers'
 

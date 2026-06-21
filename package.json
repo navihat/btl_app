@@ -45,6 +45,7 @@
     "uuid": "^10.0.0"
   },
   "build": {
+    "npmRebuild": false,
     "appId": "com.nhom6.quizexamgenerator",
     "productName": "Quiz Exam Generator",
     "directories": {
