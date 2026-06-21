@@ -186,6 +186,15 @@ Cài đặt dependencies:
 npm install
 ```
 
+> [!WARNING]
+> **Lưu ý quan trọng cho môi trường Windows (Lỗi SQLite):**
+> Dự án sử dụng thư viện `better-sqlite3` (chứa code C++ native). Nếu máy tính của bạn sử dụng Python phiên bản quá mới (từ 3.12 trở lên) để build C++, quá trình cài đặt có thể bị lỗi do thiếu thư viện lõi.
+> Để khắc phục, hãy chắc chắn bạn đã chạy lệnh sau để bổ sung thư viện trước khi gõ `npm run dev`:
+> ```bash
+> pip install setuptools
+> ```
+> (Sau khi cài xong setuptools, bạn có thể chạy `npm run rebuild:node` hoặc chạy thẳng `npm run dev` để hệ thống tự động build lại thư viện C++ cho Electron).
+
 Chạy ứng dụng ở chế độ development:
 
 ```bash
