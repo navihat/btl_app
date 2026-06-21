@@ -4,6 +4,7 @@
   "description": "Ứng dụng tạo đề trắc nghiệm cho giảng viên",
   "main": "out/main/index.js",
   "scripts": {
+    "postinstall": "electron-rebuild -f -w better-sqlite3",
     "dev": "electron-vite dev",
     "predev": "npx @electron/rebuild",
     "build": "electron-vite build",
@@ -49,6 +50,9 @@
     "directories": {
       "output": "dist"
     },
+    "asarUnpack": [
+      "**/*.node"
+    ],
     "files": [
       "out/**/*",
       "node_modules/**/*",
