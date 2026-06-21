@@ -1,0 +1,28 @@
+# Dependency directories
+node_modules/
+
+# Build outputs
+dist/
+out/
+.tsbuild/
+
+# IDE / Editor configuration
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Testing & Coverage
+coverage/
+*.lcov
+.vitest/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# SQLite database local file
+data/database.db
