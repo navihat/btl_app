@@ -14,7 +14,9 @@ export class ManualSelectionStrategy implements IQuestionSelectionStrategy {
   select(bank: Question[], criteria: SelectionCriteria): Question[] {
     const bankMap = new Map(bank.map((q) => [q.id, q]))
 
-    return criteria.selectedIds.map((id) => {
+    const uniqueIds = Array.from(new Set(criteria.selectedIds))
+
+    return uniqueIds.map((id) => {
       const question = bankMap.get(id)
       if (!question) {
         throw new Error(`Câu hỏi với id "${id}" không tồn tại trong ngân hàng.`)

@@ -26,6 +26,14 @@ export default function QuestionCard({
       className={`card${selectable ? ` question-chip${selected ? ' selected' : ''}` : ''}`}
       onClick={selectable ? handleClick : undefined}
       style={selectable ? { cursor: 'pointer' } : undefined}
+      role={selectable ? 'button' : undefined}
+      tabIndex={selectable ? 0 : undefined}
+      onKeyDown={(e) => {
+        if (selectable && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault()
+          handleClick()
+        }
+      }}
     >
       <div
         className="card-body"

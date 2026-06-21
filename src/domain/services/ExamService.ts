@@ -42,13 +42,14 @@ export class ExamService {
       throw new Error(`Đề thi với id "${examId}" không tồn tại.`)
     }
 
-    const duplicates = questionIds.filter((id) => exam.questionIds.includes(id))
+    const bank = await this.questionRepo.findAll()
+    const selected = this.selectionStrategy.select(bank, { selectedIds: questionIds })
+    
+    const selectedIds = selected.map((q) => q.id)
+    const duplicates = selectedIds.filter((id) => exam.questionIds.includes(id))
     if (duplicates.length > 0) {
       throw new Error(`Câu hỏi đã tồn tại trong đề thi: ${duplicates.join(', ')}`)
     }
-
-    const bank = await this.questionRepo.findAll()
-    const selected = this.selectionStrategy.select(bank, { selectedIds: questionIds })
 
     const updated: Exam = {
       ...exam,

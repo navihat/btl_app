@@ -6,19 +6,35 @@ export function registerQuestionHandlers(): void {
   const service = getQuestionService()
 
   ipcMain.handle('question:create', async (_event, data: CreateQuestionDTO) => {
-    return service.createQuestion(data)
+    try {
+      return { success: true, data: await service.createQuestion(data) }
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) }
+    }
   })
 
   ipcMain.handle('question:update', async (_event, id: string, data: UpdateQuestionDTO) => {
-    return service.updateQuestion(id, data)
+    try {
+      return { success: true, data: await service.updateQuestion(id, data) }
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) }
+    }
   })
 
   ipcMain.handle('question:delete', async (_event, id: string) => {
-    await service.deleteQuestion(id)
-    return { success: true }
+    try {
+      await service.deleteQuestion(id)
+      return { success: true }
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) }
+    }
   })
 
   ipcMain.handle('question:list', async (_event, filters?: QuestionFilter) => {
-    return service.listQuestions(filters)
+    try {
+      return { success: true, data: await service.listQuestions(filters) }
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) }
+    }
   })
 }

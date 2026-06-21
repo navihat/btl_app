@@ -1,4 +1,5 @@
-import { Question, CreateQuestionDTO, UpdateQuestionDTO, QuestionFilter } from '../entities/Question'
+import { Question, CreateQuestionDTO, UpdateQuestionDTO, QuestionFilter, Difficulty } from '../entities/Question'
+import { IExamRepository } from '../repositories/IExamRepository'
 import { IQuestionRepository } from '../repositories/IQuestionRepository'
 import { IQuestionFactory } from '../../patterns/factory/IQuestionFactory'
 
@@ -7,12 +8,13 @@ import { IQuestionFactory } from '../../patterns/factory/IQuestionFactory'
  * đến câu hỏi. Không xử lý file I/O (do repository đảm nhận).
  *
  * DIP: Phụ thuộc vào IQuestionRepository và IQuestionFactory (abstractions),
- * không phụ thuộc vào JsonQuestionRepository hay QuestionFactory cụ thể.
+ * không phụ thuộc vào SqliteQuestionRepository hay QuestionFactory cụ thể.
  */
 export class QuestionService {
   constructor(
     private readonly questionRepo: IQuestionRepository,
-    private readonly questionFactory: IQuestionFactory
+    private readonly questionFactory: IQuestionFactory,
+    private readonly examRepo?: IExamRepository
   ) {}
 
   async createQuestion(data: CreateQuestionDTO): Promise<Question> {
@@ -36,10 +38,19 @@ export class QuestionService {
 
     if (data.options !== undefined) {
       if (data.options.length !== 4) throw new Error('Câu hỏi phải có đúng 4 đáp án.')
-      updated.options = data.options.map((opt, i) => ({
-        id: existing.options[i]?.id ?? `opt-${i}`,
-        text: opt.text.trim()
-      }))
+      updated.options = data.options.map((opt, i) => {
+        const text = typeof opt.text === 'string' ? opt.text.trim() : ''
+        return {
+          id: existing.options[i]?.id ?? `opt-${i}`,
+          text
+        }
+      })
+      if (updated.options.some((opt) => opt.text === '')) {
+        throw new Error('Nội dung đáp án không được để trống.')
+      }
+      if (data.correctOptionIndex === undefined) {
+        throw new Error('Cần cung cấp correctOptionIndex khi cập nhật options.')
+      }
     }
 
     if (data.correctOptionIndex !== undefined) {
@@ -50,7 +61,12 @@ export class QuestionService {
       updated.correctOptionId = opts[data.correctOptionIndex].id
     }
 
-    if (data.difficulty !== undefined) updated.difficulty = data.difficulty
+    if (data.difficulty !== undefined) {
+      if (!Object.values(Difficulty).includes(data.difficulty)) {
+        throw new Error('Độ khó không hợp lệ.')
+      }
+      updated.difficulty = data.difficulty
+    }
     if (data.topic !== undefined) {
       if (data.topic.trim() === '') throw new Error('Chủ đề câu hỏi không được để trống.')
       updated.topic = data.topic.trim()
@@ -65,6 +81,15 @@ export class QuestionService {
     if (!existing) {
       throw new Error(`Câu hỏi với id "${id}" không tồn tại.`)
     }
+    if (this.examRepo) {
+      const exams = await this.examRepo.findAll()
+      const referencingExams = exams.filter((exam) => exam.questionIds.includes(id))
+      if (referencingExams.length > 0) {
+        const titles = referencingExams.map((exam) => exam.title).join(', ')
+        throw new Error(`Không thể xóa câu hỏi đang được sử dụng trong đề thi: ${titles}`)
+      }
+    }
+
     await this.questionRepo.delete(id)
   }
 

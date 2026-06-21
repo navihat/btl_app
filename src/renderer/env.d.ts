@@ -10,14 +10,15 @@ declare global {
     api: {
       questionCreate: (data: CreateQuestionDTO) => Promise<Question>
       questionUpdate: (id: string, data: UpdateQuestionDTO) => Promise<Question>
-      questionDelete: (id: string) => Promise<{ success: boolean }>
+      questionDelete: (id: string) => Promise<void>
       questionList: (filters?: QuestionFilter) => Promise<Question[]>
 
       examCreate: (data: CreateExamDTO) => Promise<Exam>
       examAddQuestions: (examId: string, questionIds: string[]) => Promise<Exam>
-      examDelete: (id: string) => Promise<{ success: boolean }>
+      examDelete: (id: string) => Promise<void>
       examList: () => Promise<Exam[]>
       examGet: (id: string) => Promise<Exam>
+      appQuit: () => void
     }
   }
 }
