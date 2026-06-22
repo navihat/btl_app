@@ -17,13 +17,14 @@ export default function FilterBar({
 }: Props): React.ReactElement {
   return (
     <div className="filter-bar card card-body">
-      <select value={difficulty} onChange={(e) => onDifficultyChange(e.target.value)}>
+      <select aria-label="Lọc theo độ khó" value={difficulty} onChange={(e) => onDifficultyChange(e.target.value)}>
         <option value="">Tất cả độ khó</option>
         <option value="easy">Dễ</option>
         <option value="medium">Trung bình</option>
         <option value="hard">Khó</option>
       </select>
       <input
+        aria-label="Tìm theo chủ đề"
         placeholder="Tìm theo chủ đề..."
         value={topic}
         onChange={(e) => onTopicChange(e.target.value)}

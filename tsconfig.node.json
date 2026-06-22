@@ -9,9 +9,9 @@
     "outDir": ".tsbuild/node",
     "paths": {
       "@domain/*": ["./src/domain/*"],
-      "@infrastructure/*": ["./src/infrastructure/*"],
+      "@database/*": ["./src/database/*"],
       "@patterns/*": ["./src/patterns/*"]
     }
   },
-  "include": ["src/main/**/*", "src/domain/**/*", "src/infrastructure/**/*", "src/patterns/**/*"]
+  "include": ["src/main/**/*", "src/domain/**/*", "src/database/**/*", "src/patterns/**/*"]
 }

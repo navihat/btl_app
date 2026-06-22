@@ -10,10 +10,20 @@ export default function QuestionBankPage(): React.ReactElement {
   const [filterTopic, setFilterTopic] = useState('')
   const [editQuestion, setEditQuestion] = useState<Question | null>(null)
   const [showModal, setShowModal] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   async function loadQuestions(): Promise<void> {
-    const list = await window.api.questionList()
-    setAllQuestions(list)
+    setLoading(true)
+    setError('')
+    try {
+      const list = await window.api.questionList()
+      setAllQuestions(list)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { loadQuestions() }, [])
@@ -38,19 +48,27 @@ export default function QuestionBankPage(): React.ReactElement {
   }
 
   async function handleSave(dto: object, id?: string): Promise<void> {
-    if (id) {
-      await window.api.questionUpdate(id, dto)
-    } else {
-      await window.api.questionCreate(dto as Parameters<typeof window.api.questionCreate>[0])
+    try {
+      if (id) {
+        await window.api.questionUpdate(id, dto)
+      } else {
+        await window.api.questionCreate(dto as Parameters<typeof window.api.questionCreate>[0])
+      }
+      setShowModal(false)
+      await loadQuestions()
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Lỗi khi lưu')
     }
-    setShowModal(false)
-    await loadQuestions()
   }
 
   async function handleDelete(id: string): Promise<void> {
     if (!confirm('Xóa câu hỏi này?')) return
-    await window.api.questionDelete(id)
-    await loadQuestions()
+    try {
+      await window.api.questionDelete(id)
+      await loadQuestions()
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Lỗi khi xóa')
+    }
   }
 
   return (
@@ -71,8 +89,11 @@ export default function QuestionBankPage(): React.ReactElement {
         onDifficultyChange={setFilterDifficulty}
         onTopicChange={setFilterTopic}
       />
+      {error && <div className="alert alert-error">{error}</div>}
 
-      {questions.length === 0 ? (
+      {loading ? (
+        <div className="empty-state"><p>Đang tải...</p></div>
+      ) : questions.length === 0 ? (
         <div className="card">
           <div className="empty-state">
             <span className="icon">📋</span>

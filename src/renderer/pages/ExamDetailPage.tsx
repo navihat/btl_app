@@ -20,15 +20,25 @@ export default function ExamDetailPage({ examId, onBack }: Props): React.ReactEl
   const [bankFilterTopic, setBankFilterTopic] = useState('')
   const [addError, setAddError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const loadExam = useCallback(async () => {
-    const e = await window.api.examGet(examId)
-    setExam(e)
-    if (e.questionIds.length > 0) {
-      const all = await window.api.questionList()
-      setExamQuestions(all.filter((q: Question) => e.questionIds.includes(q.id)))
-    } else {
-      setExamQuestions([])
+    setError('')
+    try {
+      const e = await window.api.examGet(examId)
+      setExam(e)
+      if (e.questionIds.length > 0) {
+        const all = await window.api.questionList()
+        const questionById = new Map(all.map((q: Question) => [q.id, q]))
+        setExamQuestions(e.questionIds
+          .map((id) => questionById.get(id))
+          .filter((q): q is Question => q !== undefined)
+        )
+      } else {
+        setExamQuestions([])
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err))
     }
   }, [examId])
 
@@ -76,6 +86,7 @@ export default function ExamDetailPage({ examId, onBack }: Props): React.ReactEl
     return true
   }), [bank, bankFilterDifficulty, bankFilterTopic])
 
+  if (error) return <div className="alert alert-error">{error}</div>
   if (!exam) return <div className="empty-state"><p>Đang tải...</p></div>
 
   return (

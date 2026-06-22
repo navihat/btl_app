@@ -23,7 +23,11 @@ export class ExamSubject {
 
   notify(event: 'created' | 'deleted', exam: Exam): void {
     for (const observer of this.observers) {
-      observer.update(event, exam)
+      try {
+        observer.update(event, exam)
+      } catch (error) {
+        console.error('Observer error:', error)
+      }
     }
   }
 

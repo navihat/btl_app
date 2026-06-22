@@ -39,6 +39,10 @@ export class QuestionFactory implements IQuestionFactory {
       throw new Error('Chủ đề câu hỏi không được để trống.')
     }
 
+    if (data.difficulty !== 'easy' && data.difficulty !== 'medium' && data.difficulty !== 'hard') {
+      throw new Error('Độ khó không hợp lệ.')
+    }
+
     const options: QuestionOption[] = data.options.map((opt) => ({
       id: uuidv4(),
       text: opt.text.trim()

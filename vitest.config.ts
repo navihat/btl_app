@@ -10,13 +10,13 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'lcov'],
       include: ['src/domain/**', 'src/patterns/**'],
-      exclude: ['src/renderer/**', 'src/main/**', 'src/infrastructure/**']
+      exclude: ['src/renderer/**', 'src/main/**', 'src/database/**']
     }
   },
   resolve: {
     alias: {
       '@domain': resolve('src/domain'),
-      '@infrastructure': resolve('src/infrastructure'),
+      '@database': resolve('src/database'),
       '@patterns': resolve('src/patterns')
     }
   }

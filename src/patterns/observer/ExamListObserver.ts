@@ -12,6 +12,10 @@ export class ExamListObserver implements IExamObserver {
   private exams: Exam[] = []
   private lastEvent: { type: 'created' | 'deleted'; exam: Exam } | null = null
 
+  setExams(exams: Exam[]): void {
+    this.exams = [...exams]
+  }
+
   update(event: 'created' | 'deleted', exam: Exam): void {
     this.lastEvent = { type: event, exam }
 
@@ -27,6 +31,6 @@ export class ExamListObserver implements IExamObserver {
   }
 
   getLastEvent(): { type: 'created' | 'deleted'; exam: Exam } | null {
-    return this.lastEvent
+    return this.lastEvent ? { ...this.lastEvent } : null
   }
 }

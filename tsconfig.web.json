@@ -9,7 +9,7 @@
     "target": "ESNext",
     "paths": {
       "@domain/*": ["./src/domain/*"],
-      "@infrastructure/*": ["./src/infrastructure/*"],
+      "@database/*": ["./src/database/*"],
       "@patterns/*": ["./src/patterns/*"]
     }
   },

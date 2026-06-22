@@ -42,8 +42,8 @@ export default function CreateExamPage({ onCreated, onCancel }: Props): React.Re
       }
       const exam = await window.api.examCreate(dto)
       onCreated(exam.id)
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Đã xảy ra lỗi.')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Đã xảy ra lỗi.')
     } finally {
       setLoading(false)
     }

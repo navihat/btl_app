@@ -10,20 +10,31 @@ interface Props {
 export default function ExamListPage({ onCreateNew, onViewDetail }: Props): React.ReactElement {
   const [exams, setExams] = useState<Exam[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   async function loadExams(): Promise<void> {
     setLoading(true)
-    const list = await window.api.examList()
-    setExams(list)
-    setLoading(false)
+    setError('')
+    try {
+      const list = await window.api.examList()
+      setExams(list)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { loadExams() }, [])
 
   async function handleDelete(id: string, title: string): Promise<void> {
     if (!confirm(`Xóa đề thi "${title}"?`)) return
-    await window.api.examDelete(id)
-    await loadExams()
+    try {
+      await window.api.examDelete(id)
+      await loadExams()
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : String(e))
+    }
   }
 
   return (
@@ -32,6 +43,7 @@ export default function ExamListPage({ onCreateNew, onViewDetail }: Props): Reac
         <h1 className="page-title">Quản lý đề thi</h1>
         <button className="btn btn-primary" onClick={onCreateNew}>+ Tạo đề thi mới</button>
       </div>
+      {error && <div className="alert alert-error">{error}</div>}
 
       {loading ? (
         <div className="empty-state"><p>Đang tải...</p></div>

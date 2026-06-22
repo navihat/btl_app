@@ -33,31 +33,37 @@ export class ExamBuilder implements IExamBuilder {
   }
 
   setDifficulty(difficulty: Difficulty | 'mixed'): this {
+    if (difficulty !== 'easy' && difficulty !== 'medium' && difficulty !== 'hard' && difficulty !== 'mixed') {
+      throw new Error('Độ khó không hợp lệ.')
+    }
     this.difficulty = difficulty
     return this
   }
 
   build(): Exam {
-    if (!this.title || this.title.trim() === '') {
-      throw new Error('Tên đề thi không được để trống.')
-    }
+    try {
+      if (!this.title || this.title.trim() === '') {
+        throw new Error('Tên đề thi không được để trống.')
+      }
 
-    if (this.duration <= 0) {
-      throw new Error('Thời gian làm bài phải lớn hơn 0 phút.')
-    }
+      if (this.duration <= 0) {
+        throw new Error('Thời gian làm bài phải lớn hơn 0 phút.')
+      }
 
-    const exam: Exam = {
-      id: uuidv4(),
-      title: this.title.trim(),
-      description: this.description.trim(),
-      duration: this.duration,
-      difficulty: this.difficulty,
-      questionIds: [],
-      createdAt: new Date().toISOString()
-    }
+      const exam: Exam = {
+        id: uuidv4(),
+        title: this.title.trim(),
+        description: this.description.trim(),
+        duration: this.duration,
+        difficulty: this.difficulty,
+        questionIds: [],
+        createdAt: new Date().toISOString()
+      }
 
-    this.reset()
-    return exam
+      return exam
+    } finally {
+      this.reset()
+    }
   }
 
   reset(): this {

@@ -4,30 +4,66 @@
   "description": "Ứng dụng tạo đề trắc nghiệm cho giảng viên",
   "main": "out/main/index.js",
   "scripts": {
+    "postinstall": "electron-rebuild -f -w better-sqlite3",
     "dev": "electron-vite dev",
+    "predev": "npx @electron/rebuild",
     "build": "electron-vite build",
+    "prebuild": "npx @electron/rebuild",
     "preview": "electron-vite preview",
+    "rebuild:node": "npm rebuild better-sqlite3",
+    "pretest": "npm run rebuild:node",
     "test": "vitest run",
+    "pretest:watch": "npm run rebuild:node",
     "test:watch": "vitest",
+    "pretest:coverage": "npm run rebuild:node",
     "test:coverage": "vitest run --coverage",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "dist": "electron-builder"
   },
   "devDependencies": {
+    "@electron/rebuild": "^4.0.4",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^20.14.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "@types/node": "^20.14.0",
     "@vitejs/plugin-react": "^4.3.1",
     "@vitest/coverage-v8": "^1.6.0",
+    "@vitest/ui": "^1.6.1",
     "electron": "^31.0.0",
+    "electron-builder": "^26.15.3",
+    "electron-rebuild": "^3.2.9",
     "electron-vite": "^2.3.0",
     "typescript": "^5.4.5",
     "vite": "^5.3.1",
-    "vitest": "^1.6.0"
+    "vitest": "^1.6.1"
   },
   "dependencies": {
+    "@types/uuid": "^10.0.0",
+    "better-sqlite3": "^12.11.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "uuid": "^10.0.0",
-    "@types/uuid": "^10.0.0"
+    "uuid": "^10.0.0"
+  },
+  "build": {
+    "npmRebuild": false,
+    "appId": "com.nhom6.quizexamgenerator",
+    "productName": "Quiz Exam Generator",
+    "directories": {
+      "output": "dist"
+    },
+    "asarUnpack": [
+      "**/node_modules/better-sqlite3/**/*"
+    ],
+    "files": [
+      "out/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    }
   }
 }

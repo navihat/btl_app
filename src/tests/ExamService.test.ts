@@ -63,6 +63,11 @@ describe('ExamService', () => {
       .rejects.toThrow('q-nonexistent')
   })
 
+  it('TC - addQuestions throw khi examId sai', async () => {
+    const { service } = makeService([], [])
+    await expect(service.addQuestions('wrong', ['q-1'])).rejects.toThrow()
+  })
+
   it('TC29 – addQuestions throw khi câu hỏi đã có trong đề (không trùng lặp)', async () => {
     const q1 = makeQuestion({ id: 'q-1' })
     const exam = makeExam({ id: 'e-1', questionIds: ['q-1'] })
@@ -87,10 +92,44 @@ describe('ExamService', () => {
 
   it('TC32 – createExam phát sự kiện "created" qua Observer', async () => {
     const { service, subject } = makeService([], [])
-    let received: string | null = null
-    subject.subscribe({ update: (event) => { received = event } })
+    let receivedEvent: string | null = null
+    let receivedExam: any = null
+    subject.subscribe({ update: (event, exam) => { receivedEvent = event; receivedExam = exam } })
 
-    await service.createExam(validCreateDTO)
-    expect(received).toBe('created')
+    const exam = await service.createExam(validCreateDTO)
+    expect(receivedEvent).toBe('created')
+    expect(receivedExam).toEqual(exam)
+  })
+
+  it('TC - deleteExam phát sự kiện "deleted" qua Observer', async () => {
+    const exam = makeExam({ id: 'e-del' })
+    const { service, subject } = makeService([], [exam])
+    let receivedEvent: string | null = null
+    let receivedExam: any = null
+    subject.subscribe({ update: (event, ex) => { receivedEvent = event; receivedExam = ex } })
+
+    await service.deleteExam('e-del')
+    expect(receivedEvent).toBe('deleted')
+    expect(receivedExam).toEqual(exam)
+  })
+
+  it('TC - listExams trả về danh sách đề thi', async () => {
+    const e1 = makeExam({ id: 'e-1' })
+    const e2 = makeExam({ id: 'e-2' })
+    const { service } = makeService([], [e1, e2])
+    const list = await service.listExams()
+    expect(list).toHaveLength(2)
+  })
+
+  it('TC - getExam trả về đúng đề thi', async () => {
+    const e = makeExam({ id: 'e-1' })
+    const { service } = makeService([], [e])
+    const res = await service.getExam('e-1')
+    expect(res).toEqual(e)
+  })
+
+  it('TC - getExam throw khi id sai', async () => {
+    const { service } = makeService([], [])
+    await expect(service.getExam('wrong')).rejects.toThrow()
   })
 })

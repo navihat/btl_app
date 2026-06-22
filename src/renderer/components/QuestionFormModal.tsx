@@ -45,14 +45,28 @@ export default function QuestionFormModal({ editQuestion, onSave, onClose }: Pro
     setError('')
   }, [editQuestion])
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
   function updateOptionText(index: number, value: string): void {
-    const next = [...form.optionTexts] as [string, string, string, string]
-    next[index] = value
-    setForm((f) => ({ ...f, optionTexts: next }))
+    setForm((f) => {
+      const next = [...f.optionTexts] as [string, string, string, string]
+      next[index] = value
+      return { ...f, optionTexts: next }
+    })
   }
 
   async function handleSubmit(): Promise<void> {
     setError('')
+    if (!form.content.trim()) { setError('Vui lòng nhập nội dung câu hỏi.'); return; }
+    if (form.optionTexts.some(t => !t.trim())) { setError('Vui lòng nhập đủ 4 đáp án.'); return; }
+    if (!form.topic.trim()) { setError('Vui lòng nhập chủ đề.'); return; }
+    
     setLoading(true)
     try {
       const dto = {
