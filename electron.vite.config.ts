@@ -8,7 +8,7 @@ export default defineConfig({
     resolve: {
       alias: {
         '@domain': resolve('src/domain'),
-        '@database': resolve('src/database'),
+        '@infrastructure': resolve('src/infrastructure'),
         '@patterns': resolve('src/patterns')
       }
     },
@@ -28,7 +28,7 @@ export default defineConfig({
     resolve: {
       alias: {
         '@domain': resolve('src/domain'),
-        '@database': resolve('src/database'),
+        '@infrastructure': resolve('src/infrastructure'),
         '@patterns': resolve('src/patterns')
       }
     }

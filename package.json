@@ -4,12 +4,13 @@
   "description": "Ứng dụng tạo đề trắc nghiệm cho giảng viên",
   "main": "out/main/index.js",
   "scripts": {
-    "postinstall": "electron-rebuild -f -w better-sqlite3",
+    "postinstall": "npx @electron/rebuild -f -w better-sqlite3",
     "dev": "electron-vite dev",
-    "predev": "npx @electron/rebuild",
+    "predev": "npx @electron/rebuild -f -w better-sqlite3",
     "build": "electron-vite build",
-    "prebuild": "npx @electron/rebuild",
+    "prebuild": "npx @electron/rebuild -f -w better-sqlite3",
     "preview": "electron-vite preview",
+    "prepreview": "npx @electron/rebuild -f -w better-sqlite3",
     "rebuild:node": "npm rebuild better-sqlite3",
     "pretest": "npm run rebuild:node",
     "test": "vitest run",
@@ -18,6 +19,7 @@
     "pretest:coverage": "npm run rebuild:node",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
+    "predist": "npx @electron/rebuild -f -w better-sqlite3",
     "dist": "electron-builder"
   },
   "devDependencies": {
@@ -31,7 +33,6 @@
     "@vitest/ui": "^1.6.1",
     "electron": "^31.0.0",
     "electron-builder": "^26.15.3",
-    "electron-rebuild": "^3.2.9",
     "electron-vite": "^2.3.0",
     "typescript": "^5.4.5",
     "vite": "^5.3.1",
